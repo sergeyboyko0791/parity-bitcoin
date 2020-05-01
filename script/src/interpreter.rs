@@ -1116,6 +1116,9 @@ pub fn eval_script(
 			Opcode::OP_VERNOTIF => {
 				return Err(Error::DisabledOpcode(opcode));
 			},
+			Opcode::OP_CREATE | Opcode::OP_CALL | Opcode::OP_SPEND => {
+				return Err(Error::DisabledOpcode(opcode));
+			},
 		}
 
 		if stack.len() + altstack.len() > 1000 {

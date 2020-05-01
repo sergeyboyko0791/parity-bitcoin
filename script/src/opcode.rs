@@ -213,6 +213,11 @@ pub enum Opcode {
 	OP_NOP8 = 0xb7,
 	OP_NOP9 = 0xb8,
 	OP_NOP10 = 0xb9,
+
+	// Custom QTUM EVM related opcodes
+	OP_CREATE = 0xc1,
+	OP_CALL = 0xc2,
+	OP_SPEND = 0xc3,
 }
 
 impl fmt::Display for Opcode {
