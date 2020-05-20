@@ -13,6 +13,8 @@ pub enum ScriptType {
 	NullData,
 	WitnessScript,
 	WitnessKey,
+	// Qtum specific
+	Call,
 }
 
 impl From<GlobalScriptType> for ScriptType {
@@ -26,6 +28,7 @@ impl From<GlobalScriptType> for ScriptType {
 			GlobalScriptType::NullData => ScriptType::NullData,
 			GlobalScriptType::WitnessScript => ScriptType::WitnessScript,
 			GlobalScriptType::WitnessKey => ScriptType::WitnessKey,
+			GlobalScriptType::Call => ScriptType::Call,
 		}
 	}
 }
@@ -41,6 +44,7 @@ impl Serialize for ScriptType {
 			ScriptType::NullData => "nulldata".serialize(serializer),
 			ScriptType::WitnessScript => "witness_v0_scripthash".serialize(serializer),
 			ScriptType::WitnessKey => "witness_v0_keyhash".serialize(serializer),
+			ScriptType::Call => "call".serialize(serializer),
 		}
 	}
 }
@@ -68,6 +72,7 @@ impl<'a> Deserialize<'a> for ScriptType {
 					"nulldata" => Ok(ScriptType::NullData),
 					"witness_v0_scripthash" => Ok(ScriptType::WitnessScript),
 					"witness_v0_keyhash" => Ok(ScriptType::WitnessKey),
+					"call" => Ok(ScriptType::Call),
 					_ => Err(E::invalid_value(Unexpected::Str(value), &self)),
 				}
 			}
@@ -92,6 +97,7 @@ mod tests {
 		assert_eq!(serde_json::to_string(&ScriptType::NullData).unwrap(), r#""nulldata""#);
 		assert_eq!(serde_json::to_string(&ScriptType::WitnessScript).unwrap(), r#""witness_v0_scripthash""#);
 		assert_eq!(serde_json::to_string(&ScriptType::WitnessKey).unwrap(), r#""witness_v0_keyhash""#);
+		assert_eq!(serde_json::to_string(&ScriptType::Call).unwrap(), r#""call""#);
 	}
 
 	#[test]
@@ -104,5 +110,6 @@ mod tests {
 		assert_eq!(serde_json::from_str::<ScriptType>(r#""nulldata""#).unwrap(), ScriptType::NullData);
 		assert_eq!(serde_json::from_str::<ScriptType>(r#""witness_v0_scripthash""#).unwrap(), ScriptType::WitnessScript);
 		assert_eq!(serde_json::from_str::<ScriptType>(r#""witness_v0_keyhash""#).unwrap(), ScriptType::WitnessKey);
+		assert_eq!(serde_json::from_str::<ScriptType>(r#""call""#).unwrap(), ScriptType::Call);
 	}
 }
