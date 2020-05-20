@@ -28,6 +28,8 @@ pub enum ScriptType {
 	NullData,
 	WitnessScript,
 	WitnessKey,
+	// Qtum specific
+	Call,
 }
 
 /// Address from Script
@@ -354,6 +356,7 @@ impl Script {
 			ScriptType::WitnessKey
 		} else if self.is_pay_to_witness_script_hash() {
 			ScriptType::WitnessScript
+		// TODO add Call
 		} else {
 			ScriptType::NonStandard
 		}
@@ -449,6 +452,9 @@ impl Script {
 				Ok(vec![]) // TODO
 			},
 			ScriptType::WitnessKey => {
+				Ok(vec![]) // TODO
+			},
+			ScriptType::Call => {
 				Ok(vec![]) // TODO
 			},
 		}
