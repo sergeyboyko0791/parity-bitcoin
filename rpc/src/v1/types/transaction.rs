@@ -81,6 +81,12 @@ pub struct TransactionOutputScript {
 	pub addresses: Vec<String>,
 }
 
+impl TransactionOutputScript {
+	pub fn is_empty(&self) -> bool {
+		self.asm.is_empty() && self.hex.is_empty()
+	}
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum TransactionInputEnum {
@@ -132,6 +138,12 @@ pub struct SignedTransactionOutput {
 	/// Output script
 	#[serde(rename = "scriptPubKey")]
 	pub script: TransactionOutputScript,
+}
+
+impl SignedTransactionOutput {
+	pub fn is_empty(&self) -> bool {
+		self.value == 0.0 && self.script.is_empty()
+	}
 }
 
 /// Transaction
