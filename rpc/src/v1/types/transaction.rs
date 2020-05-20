@@ -88,6 +88,15 @@ pub enum TransactionInputEnum {
 	Coinbase(CoinbaseTransactionInput),
 }
 
+impl TransactionInputEnum {
+	pub fn is_coinbase(&self) -> bool {
+		match self {
+			TransactionInputEnum::Coinbase(_) => true,
+			_ => false,
+		}
+	}
+}
+
 /// Signed transaction input
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SignedTransactionInput {
@@ -164,6 +173,12 @@ pub struct Transaction {
 	/// The block height transaction mined in
 	#[serde(default)]
 	pub height: u64,
+}
+
+impl Transaction {
+	pub fn is_coinbase(&self) -> bool {
+		self.vin.iter().find(|input| input.is_coinbase()).is_some()
+	}
 }
 
 /// Return value of `getrawtransaction` method
