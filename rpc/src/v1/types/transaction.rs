@@ -141,7 +141,7 @@ pub struct SignedTransactionOutput {
 }
 
 impl SignedTransactionOutput {
-	pub fn is_zero(&self) -> bool {
+	pub fn is_empty(&self) -> bool {
 		self.value == 0.0 && self.script.is_empty()
 	}
 }
