@@ -184,7 +184,8 @@ pub struct Transaction {
 	pub blocktime: u32,
 	/// The block height transaction mined in
 	#[serde(default)]
-	pub height: u64,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub height: Option<u64>,
 }
 
 impl Transaction {
@@ -485,7 +486,7 @@ mod tests {
 			rawconfirmations: None,
 			time: 88,
 			blocktime: 99,
-			height: 0,
+			height: Some(0),
 		};
 		assert_eq!(serde_json::to_string(&tx).unwrap(), r#"{"hex":"deadbeef","txid":"0400000000000000000000000000000000000000000000000000000000000000","hash":"0500000000000000000000000000000000000000000000000000000000000000","size":33,"vsize":44,"version":55,"locktime":66,"vin":[],"vout":[],"blockhash":"0600000000000000000000000000000000000000000000000000000000000000","confirmations":77,"time":88,"blocktime":99,"height":0}"#);
 	}
@@ -507,7 +508,7 @@ mod tests {
 			rawconfirmations: None,
 			time: 88,
 			blocktime: 99,
-			height: 0,
+			height: None,
 		};
 		assert_eq!(
 			serde_json::from_str::<Transaction>(r#"{"hex":"deadbeef","txid":"0400000000000000000000000000000000000000000000000000000000000000","hash":"0500000000000000000000000000000000000000000000000000000000000000","size":33,"vsize":44,"version":55,"locktime":66,"vin":[],"vout":[],"blockhash":"0600000000000000000000000000000000000000000000000000000000000000","confirmations":77,"time":88,"blocktime":99}"#).unwrap(),
