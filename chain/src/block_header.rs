@@ -74,10 +74,6 @@ impl Serializable for BlockHeader {
 impl Deserializable for BlockHeader {
 	fn deserialize<T: io::Read>(reader: &mut Reader<T>) -> Result<Self, ser::Error> where Self: Sized {
 		let version = reader.read()?;
-		if version != 0 && version != 1 && version != 4 {
-			return Err(ser::Error::Custom(format!("Unsupported block header version {}", version)));
-		}
-
 		let previous_header_hash = reader.read()?;
 		let merkle_root_hash = reader.read()?;
 		let hash_final_sapling_root = if version == 4 {
