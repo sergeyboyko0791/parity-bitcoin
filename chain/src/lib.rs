@@ -28,7 +28,7 @@ pub trait RepresentH256 {
 pub use primitives::{hash, bytes, bigint, compact};
 
 pub use block::Block;
-pub use block_header::BlockHeader;
+pub use block_header::{BlockHeader};
 pub use merkle_root::{merkle_root, merkle_node_hash};
 pub use transaction::{Transaction, TransactionInput, TransactionOutput, OutPoint, JoinSplit, ShieldedSpend, ShieldedOutput};
 
