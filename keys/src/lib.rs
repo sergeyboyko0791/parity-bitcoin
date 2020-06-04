@@ -7,6 +7,7 @@ extern crate bitcrypto as crypto;
 extern crate primitives;
 
 mod address;
+mod cashaddress;
 mod display;
 mod keypair;
 mod error;
@@ -18,6 +19,7 @@ mod signature;
 pub use primitives::{hash, bytes};
 
 pub use address::{Type, Address};
+pub use cashaddress::{AddressType as CashAddrType, CashAddress};
 pub use display::DisplayLayout;
 pub use keypair::KeyPair;
 pub use error::Error;

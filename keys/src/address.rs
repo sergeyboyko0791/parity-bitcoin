@@ -10,7 +10,7 @@ use std::str::FromStr;
 use std::ops::Deref;
 use base58::{ToBase58, FromBase58};
 use crypto::{ChecksumType, checksum, dhash256, dgroestl512, keccak256};
-use {DisplayLayout, Error, AddressHash};
+use {AddressHash, CashAddress, CashAddrType, DisplayLayout, Error};
 
 /// There are two address formats currently in use.
 /// https://bitcoin.org/en/developer-reference#address-conversion
@@ -137,6 +137,46 @@ impl FromStr for Address {
 impl From<&'static str> for Address {
 	fn from(s: &'static str) -> Self {
 		s.parse().unwrap()
+	}
+}
+
+impl Address {
+	pub fn from_cashaddress(cashaddr: &str, checksum_type: ChecksumType, p2pkh_prefix: u8, p2sh_prefix: u8) -> Result<Address, String> {
+		let address = CashAddress::decode(cashaddr)?;
+
+		if address.hash.len() != 20 {
+			return Err("Expect 20 bytes long hash".into());
+		}
+
+		let mut hash: AddressHash = Default::default();
+		hash.copy_from_slice(address.hash.as_slice());
+
+		let prefix = match address.address_type {
+			CashAddrType::P2PKH => p2pkh_prefix,
+			CashAddrType::P2SH => p2sh_prefix,
+		};
+
+		// Simple UTXO hash specific
+		let t_addr_prefix = 0;
+
+		Ok(Address {
+			prefix,
+			t_addr_prefix,
+			hash,
+			checksum_type,
+		})
+	}
+
+	pub fn to_cashaddress(&self, network_prefix: &str, p2pkh_prefix: u8, p2sh_prefix: u8) -> Result<CashAddress, String> {
+		let address_type = if self.prefix == p2pkh_prefix {
+			CashAddrType::P2PKH
+		} else if self.prefix == p2sh_prefix {
+			CashAddrType::P2SH
+		} else {
+			return Err(format!("Unknown address prefix {}. Expect: {}, {}", self.prefix, p2pkh_prefix, p2sh_prefix));
+		};
+
+		CashAddress::new(network_prefix, Vec::from(self.hash.clone().take().to_vec()), address_type)
 	}
 }
 
@@ -269,4 +309,50 @@ mod tests {
 		assert_eq!(address, "SVCbBs6FvPYxJrYoJc4TdCe47QNCgmTabv".into());
 		assert_eq!(address.to_string(), "SVCbBs6FvPYxJrYoJc4TdCe47QNCgmTabv".to_owned());
 	}
+
+	#[test]
+	fn test_from_to_cashaddress() {
+		let cashaddresses = vec![
+			"bitcoincash:qzxqqt9lh4feptf0mplnk58gnajfepzwcq9f2rxk55",
+			"bitcoincash:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2",
+			"bitcoincash:pq4ql3ph6738xuv2cycduvkpu4rdwqge5q2uxdfg6f",
+		];
+		let expected = vec![
+			"1DmFp16U73RrVZtYUbo2Ectt8mAnYScpqM",
+			"1PQPheJQSauxRPTxzNMUco1XmoCyPoEJCp",
+			"35XRC5HRZjih1sML23UXv1Ry1SzTDKSmfQ",
+		];
+
+		for i in 0..3 {
+			let actual_address = Address::from_cashaddress(cashaddresses[i], ChecksumType::DSHA256, 0, 5).unwrap();
+			let expected_address: Address = expected[i].into();
+			assert_eq!(actual_address, expected_address);
+			let actual_cashaddress = actual_address.to_cashaddress("bitcoincash", 0, 5).unwrap().encode().unwrap();
+			let expected_cashaddress = cashaddresses[i];
+            assert_eq!(actual_cashaddress, expected_cashaddress);
+		}
+	}
+
+    #[test]
+    fn test_from_cashaddress_err() {
+        assert_eq!(Address::from_cashaddress("bitcoincash:qgagf7w02x4wnz3mkwnchut2vxphjzccwxgjvvjmlsxqwkcw59jxxuz", ChecksumType::DSHA256, 0, 5),
+                   Err("Expect 20 bytes long hash".into()));
+    }
+
+    #[test]
+    fn test_to_cashaddress_err() {
+        let address = Address {
+            prefix: 2,
+            t_addr_prefix: 0,
+            hash: [140, 0, 44, 191, 189, 83, 144, 173, 47, 216, 127, 59, 80, 232, 159, 100, 156, 132, 78, 192].into(),
+            checksum_type: ChecksumType::DSHA256,
+        };
+
+        assert_eq!(address.to_cashaddress("bitcoincash", 0, 5),
+                   Err("Unknown address prefix 2. Expect: 0, 5".into()));
+
+		let address: Address = "1DmFp16U73RrVZtYUbo2Ectt8mAnYScpqM".into();
+        assert_eq!(address.to_cashaddress("prefix", 0, 5),
+                   Err("Unexpected network prefix".into()));
+    }
 }
