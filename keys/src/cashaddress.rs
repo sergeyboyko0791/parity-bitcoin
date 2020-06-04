@@ -46,7 +46,7 @@ impl FromStr for NetworkPrefix {
     }
 }
 
-impl From<&str> for NetworkPrefix {
+impl From<&'static str> for NetworkPrefix {
     fn from(s: &str) -> Self {
         s.parse().unwrap()
     }

@@ -318,29 +318,14 @@ mod tests {
 			"bitcoincash:pq4ql3ph6738xuv2cycduvkpu4rdwqge5q2uxdfg6f",
 		];
 		let expected = vec![
-			Address {
-				prefix: 0,
-				t_addr_prefix: 0,
-				hash: vec![140, 0, 44, 191, 189, 83, 144, 173, 47, 216, 127, 59, 80, 232, 159, 100, 156, 132, 78, 192].as_slice().into(),
-				checksum_type: ChecksumType::DSHA256,
-			},
-			Address {
-				prefix: 0,
-				t_addr_prefix: 0,
-				hash: vec![245, 191, 72, 179, 151, 218, 231, 11, 232, 43, 60, 202, 71, 147, 248, 235, 43, 108, 218, 201].as_slice().into(),
-				checksum_type: ChecksumType::DSHA256,
-			},
-			Address {
-				prefix: 5,
-				t_addr_prefix: 0,
-				hash: vec![42, 15, 196, 55, 215, 162, 115, 113, 138, 193, 48, 222, 50, 193, 229, 70, 215, 1, 25, 160].as_slice().into(),
-				checksum_type: ChecksumType::DSHA256,
-			},
+			"1DmFp16U73RrVZtYUbo2Ectt8mAnYScpqM",
+			"1PQPheJQSauxRPTxzNMUco1XmoCyPoEJCp",
+			"35XRC5HRZjih1sML23UXv1Ry1SzTDKSmfQ",
 		];
 
 		for i in 0..3 {
 			let actual_address = Address::from_cashaddress(cashaddresses[i], ChecksumType::DSHA256, 0, 5).unwrap();
-			let expected_address = expected[i].clone();
+			let expected_address: Address = expected[i].into();
 			assert_eq!(actual_address, expected_address);
 			let actual_cashaddress = actual_address.to_cashaddress("bitcoincash", 0, 5).unwrap().encode().unwrap();
 			let expected_cashaddress = cashaddresses[i];
@@ -359,20 +344,14 @@ mod tests {
         let address = Address {
             prefix: 2,
             t_addr_prefix: 0,
-            hash: vec![140, 0, 44, 191, 189, 83, 144, 173, 47, 216, 127, 59, 80, 232, 159, 100, 156, 132, 78, 192].as_slice().into(),
+            hash: [140, 0, 44, 191, 189, 83, 144, 173, 47, 216, 127, 59, 80, 232, 159, 100, 156, 132, 78, 192].into(),
             checksum_type: ChecksumType::DSHA256,
         };
 
         assert_eq!(address.to_cashaddress("bitcoincash", 0, 5),
                    Err("Unknown address prefix 2. Expect: 0, 5".into()));
 
-        let address = Address {
-            prefix: 0,
-            t_addr_prefix: 0,
-            hash: vec![140, 0, 44, 191, 189, 83, 144, 173, 47, 216, 127, 59, 80, 232, 159, 100, 156, 132, 78, 192].as_slice().into(),
-            checksum_type: ChecksumType::DSHA256,
-        };
-
+		let address: Address = "1DmFp16U73RrVZtYUbo2Ectt8mAnYScpqM".into();
         assert_eq!(address.to_cashaddress("prefix", 0, 5),
                    Err("Unexpected network prefix".into()));
     }
