@@ -187,6 +187,20 @@ impl CashAddress {
     }
 }
 
+impl FromStr for CashAddress {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        CashAddress::decode(s)
+    }
+}
+
+impl From<&'static str> for CashAddress {
+    fn from(s: &'static str) -> Self {
+        s.parse().unwrap()
+    }
+}
+
 fn split_address(addr: &str) -> Result<(NetworkPrefix, &str), String> {
     let tokens: Vec<&str> = addr.split(':').collect();
     if tokens.len() == 1 {
