@@ -167,6 +167,7 @@ impl_hash!(ZkProofSapling, 192);
 impl_hash!(ZkProof, 296);
 impl_hash!(EncCipherText, 580);
 impl_hash!(CipherText, 601);
+impl_hash!(EquihashSolution, 1344);
 
 impl H256 {
 	#[inline]
