@@ -30,6 +30,8 @@ pub enum ScriptType {
 	WitnessKey,
 	// Qtum specific
 	Call,
+	// Qtum specific
+	Create,
 }
 
 /// Address from Script
@@ -455,6 +457,9 @@ impl Script {
 				Ok(vec![]) // TODO
 			},
 			ScriptType::Call => {
+				Ok(vec![]) // TODO
+			},
+			ScriptType::Create => {
 				Ok(vec![]) // TODO
 			},
 		}
