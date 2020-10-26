@@ -198,7 +198,7 @@ impl Script {
 		let mut pc = 1;
 		let mut keys = 0;
 		while pc < self.len() - 2 {
-			let instruction = match self.get_instruction(pc) {
+			let instruction = match self.get_instruction_at(pc) {
 				Ok(i) => i,
 				_ => return false,
 			};
@@ -253,7 +253,17 @@ impl Script {
 		Opcode::from_u8(self.data[position]).ok_or(Error::BadOpcode)
 	}
 
-	pub fn get_instruction(&self, position: usize) -> Result<Instruction, Error> {
+	pub fn get_instruction(&self, index: usize) -> Option<Result<Instruction, Error>> {
+		self.iter().enumerate().find_map(|(idx, instr)| {
+			if idx == index {
+				Some(instr)
+			} else {
+				None
+			}
+		})
+	}
+
+	pub fn get_instruction_at(&self, position: usize) -> Result<Instruction, Error> {
 		let opcode = self.get_opcode(position)?;
 		let instruction = match opcode {
 			Opcode::OP_PUSHDATA1 |
@@ -307,7 +317,7 @@ impl Script {
 		let mut result = Vec::new();
 
 		while pc < self.len() {
-			match self.get_instruction(pc) {
+			match self.get_instruction_at(pc) {
 				Ok(instruction) => {
 					if instruction.opcode != Opcode::OP_CODESEPARATOR {
 						result.extend_from_slice(&self[pc..pc + instruction.step]);
@@ -329,7 +339,7 @@ impl Script {
 	pub fn is_push_only(&self) -> bool {
 		let mut pc = 0;
 		while pc < self.len() {
-			let instruction = match self.get_instruction(pc) {
+			let instruction = match self.get_instruction_at(pc) {
 				Ok(i) => i,
 				_ => return false,
 			};
@@ -439,7 +449,7 @@ impl Script {
 				let mut addresses: Vec<ScriptAddress> = Vec::new();
 				let mut pc = 1;
 				while pc < self.len() - 2 {
-					let instruction = self.get_instruction(pc).expect("this method depends on previous check in script_type()");
+					let instruction = self.get_instruction_at(pc).expect("this method depends on previous check in script_type()");
 					let data = instruction.data.expect("this method depends on previous check in script_type()");
 					let address = Public::from_slice(data)?.address_hash();
 					addresses.push(ScriptAddress::new_p2pkh(address));
@@ -502,9 +512,12 @@ impl<'a> Iterator for Instructions<'a> {
 
 		if self.script.len() <= self.position { return None; }
 
-		let instruction = match self.script.get_instruction(self.position) {
+		let instruction = match self.script.get_instruction_at(self.position) {
 			Ok(x) => x,
-			Err(e) => return Some(Err(e)),
+			Err(e) => {
+				self.position = self.script.len();
+				return Some(Err(e));
+			},
 		};
 
 		self.position += instruction.step;
@@ -521,7 +534,7 @@ impl<'a> Iterator for Opcodes<'a> {
 
 		if self.script.len() <= self.position { return None; }
 
-		let instruction = match self.script.get_instruction(self.position) {
+		let instruction = match self.script.get_instruction_at(self.position) {
 			Ok(x) => x,
 			Err(e) => return Some(Err(e)),
 		};
@@ -564,7 +577,7 @@ impl fmt::Display for Script {
 		let mut pc = 0;
 
 		while pc < self.len() {
-			let instruction = match self.get_instruction(pc) {
+			let instruction = match self.get_instruction_at(pc) {
 				Ok(i) => i,
 				Err(e) => return e.fmt(f),
 			};
@@ -597,7 +610,7 @@ pub fn is_witness_commitment_script(script: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-	use {Builder, Opcode};
+	use {Builder, Error, Opcode};
 	use super::{Script, ScriptType, ScriptAddress, MAX_SCRIPT_ELEMENT_SIZE};
 	use keys::{Address, Public};
 
@@ -812,5 +825,64 @@ OP_ADD
 			.into_script();
 		assert_eq!(script.script_type(), ScriptType::ScriptHash);
 		assert_eq!(script.num_signatures_required(), 1);
+	}
+
+	#[test]
+	fn test_get_instruction() {
+		// Builder::default()
+		// 	.push_opcode(Opcode::OP_4)
+		// 	.push_opcode(Opcode::OP_HASH160)
+		// 	.push_bytes(&[0; 20])
+		// 	.push_opcode(Opcode::_F9) // Bad opcode - 0xf9
+		// 	.push_bytes(&[1; 20])
+		// 	.push_opcode(Opcode::OP_EQUAL)
+		// is the same as following:
+		let script: Script = "54a9140000000000000000000000000000000000000000f914010101010101010101010101010101010101010187".into();
+
+		match script.get_instruction(0) {
+			Some(Ok(instr)) => assert_eq!(instr.opcode, Opcode::OP_4),
+			_ => panic!("Expected Some(Ok)"),
+		}
+		match script.get_instruction(1) {
+			Some(Ok(instr)) => assert_eq!(instr.opcode, Opcode::OP_HASH160),
+			_ => panic!("Expected Some(Ok)"),
+		}
+		match script.get_instruction(2) {
+			Some(Ok(instr)) => assert_eq!(instr.opcode, Opcode::OP_PUSHBYTES_20),
+			_ => panic!("Expected Some(Ok)"),
+		}
+		match script.get_instruction(3) {
+			Some(Err(e)) => assert_eq!(e,Error::BadOpcode),
+			_ => panic!("Expected error"),
+		}
+		assert!(script.get_instruction(4).is_none());
+		assert!(script.get_instruction(5).is_none());
+		assert!(script.get_instruction(10).is_none());
+		assert!(script.get_instruction(1245).is_none());
+		assert!(script.get_instruction(99187829973).is_none());
+	}
+
+	#[test]
+	fn test_script_iter() {
+		// Builder::default()
+		// 	.push_opcode(Opcode::OP_4)
+		// 	.push_opcode(Opcode::OP_HASH160)
+		// 	.push_bytes(&[0; 20])
+		// 	.push_opcode(Opcode::_F9) // Bad opcode - 0xf9
+		// 	.push_bytes(&[1; 20])
+		// 	.push_opcode(Opcode::OP_EQUAL)
+		// is the same as following:
+		let script: Script = "54a9140000000000000000000000000000000000000000f914010101010101010101010101010101010101010187".into();
+
+		let mut max_idx = 0;
+		for (idx, r) in script.iter().enumerate() {
+			assert!(idx < 4, "Loop must stop on error");
+			match idx {
+				3 => assert!(r.is_err()),
+				_ => assert!(r.is_ok()),
+			}
+			max_idx = idx;
+		}
+		assert_eq!(max_idx, 3);
 	}
 }

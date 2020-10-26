@@ -218,6 +218,7 @@ pub enum Opcode {
 	OP_CREATE = 0xc1,
 	OP_CALL = 0xc2,
 	OP_SPEND = 0xc3,
+	OP_SENDER = 0xc4,
 }
 
 impl fmt::Display for Opcode {
@@ -435,6 +436,12 @@ impl Opcode {
 			0xb7 => Some(OP_NOP8),
 			0xb8 => Some(OP_NOP9),
 			0xb9 => Some(OP_NOP10),
+
+			// Custom QTUM EVM related opcodes
+			0xc1 => Some(OP_CREATE),
+			0xc2 => Some(OP_CALL),
+			0xc3 => Some(OP_SPEND),
+			0xc4 => Some(OP_SENDER),
 			_ => None,
 		}
 	}
