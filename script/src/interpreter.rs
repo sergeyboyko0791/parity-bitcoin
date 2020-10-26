@@ -434,7 +434,7 @@ pub fn eval_script(
 
 	while pc < script.len() {
 		let executing = exec_stack.iter().all(|x| *x);
-		let instruction = match script.get_instruction(pc) {
+		let instruction = match script.get_instruction_at(pc) {
 			Ok(i) => i,
 			Err(Error::BadOpcode) if !executing => {
 				pc += 1;
@@ -1116,7 +1116,7 @@ pub fn eval_script(
 			Opcode::OP_VERNOTIF => {
 				return Err(Error::DisabledOpcode(opcode));
 			},
-			Opcode::OP_CREATE | Opcode::OP_CALL | Opcode::OP_SPEND => {
+			Opcode::OP_CREATE | Opcode::OP_CALL | Opcode::OP_SPEND | Opcode::OP_SENDER => {
 				return Err(Error::DisabledOpcode(opcode));
 			},
 		}
